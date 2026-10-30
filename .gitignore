@@ -59,3 +59,11 @@ keystore.p12
 config.yml
 *.jks
 
+
+# Signing material and local build config - never commit
+local.properties
+.gradle/.gradlerc
+my-release-key.keystore
+presentation/my-release-key.keystore
+*.jks
+keystore.properties

@@ -42,6 +42,7 @@ import dev.octoshrimpy.quik.common.util.extensions.fromRecipient
 import dev.octoshrimpy.quik.common.util.extensions.toPerson
 import dev.octoshrimpy.quik.extensions.isImage
 import dev.octoshrimpy.quik.feature.compose.ComposeActivity
+import dev.octoshrimpy.quik.feature.otp.OtpPopupActivity
 import dev.octoshrimpy.quik.feature.qkreply.QkReplyActivity
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.manager.ShortcutManager
@@ -55,6 +56,7 @@ import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.util.GlideApp
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
 import dev.octoshrimpy.quik.util.tryOrNull
@@ -372,6 +374,31 @@ class NotificationManagerImpl @Inject constructor(
                     }
                 }
                 .forEach { notification.addAction(it) }
+
+        // SMS Organizer style: when the latest incoming message carries a verification code,
+        // offer a one-tap "Copy code" action that opens the translucent OTP popup
+        if (prefs.otpPopup.get()) {
+            val latestMessage = messages.lastOrNull { !it.isMe() }
+            val otpCode = latestMessage?.let { MessageClassifier.extractOtp(it.getText()) }
+            if (otpCode != null) {
+                val copyIntent = Intent(context, OtpPopupActivity::class.java)
+                    .putExtra(OtpPopupActivity.EXTRA_CODE, otpCode)
+                    .putExtra(OtpPopupActivity.EXTRA_SENDER, latestMessage.address)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val copyPI = PendingIntent.getActivity(
+                    context,
+                    (threadId.toInt() + 200000),
+                    copyIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                notification.addAction(
+                    NotificationCompat.Action.Builder(
+                        R.drawable.ic_content_copy_black_24dp,
+                        context.getString(R.string.notification_action_copy_code),
+                        copyPI
+                    ).build()
+                )
+            }
+        }
 
         if (prefs.qkreply.get()) {
             notification.priority = NotificationCompat.PRIORITY_DEFAULT

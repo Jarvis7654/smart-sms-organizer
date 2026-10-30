@@ -49,6 +49,7 @@ import dev.octoshrimpy.quik.repository.EmojiReactionRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import dev.octoshrimpy.quik.repository.SyncRepository
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.Preferences
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
@@ -161,20 +162,53 @@ class MainViewModel @Inject constructor(
         }
 
 
-        // when unreadAtTop preference changes, reload the model view data to refresh view
+        // when unreadAtTop preference changes, reload the model view data to refresh view,
+        // keeping the currently selected auto-organization category
         prefs.unreadAtTop.asObservable()
             .skip(1)
             .debounce(400, TimeUnit.MILLISECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .withLatestFrom(state) { _, state ->
+                val category = when (state.page) {
+                    is Inbox -> state.page.category
+                    is Archived -> state.page.category
+                    else -> MessageClassifier.CATEGORY_ALL
+                }
                 if (state.page is Inbox)
                     newState {
-                        copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get())))
+                        copy(page = Inbox(
+                            data = conversationRepo.getConversations(prefs.unreadAtTop.get(), false, category),
+                            category = category
+                        ))
                     }
                 else if (state.page is Archived)
                     newState {
-                        copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true)))
+                        copy(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true, category)))
                     }
+            }
+            .autoDisposable(view.scope())
+            .subscribe()
+
+        // Auto-organization category chips: filter the conversation list
+        view.categorySelectedIntent
+            .withLatestFrom(state) { category, currentState ->
+                when (currentState.page) {
+                    is Inbox -> newState {
+                        copy(page = currentState.page.copy(
+                            category = category,
+                            data = conversationRepo.getConversations(prefs.unreadAtTop.get(), false, category)
+                        ))
+                    }
+
+                    is Archived -> newState {
+                        copy(page = currentState.page.copy(
+                            category = category,
+                            data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true, category)
+                        ))
+                    }
+
+                    else -> Unit
+                }
             }
             .autoDisposable(view.scope())
             .subscribe()

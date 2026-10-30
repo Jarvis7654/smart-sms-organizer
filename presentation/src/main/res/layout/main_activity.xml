@@ -64,6 +64,61 @@
                 android:nextFocusRight="@+id/compose" />
         </androidx.appcompat.widget.Toolbar>
 
+        <HorizontalScrollView
+            android:id="@+id/categoryBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:scrollbars="none"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:id="@+id/categoryRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipAll"
+                    style="@style/CategoryChip"
+                    android:text="@string/category_all" />
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipPersonal"
+                    style="@style/CategoryChip"
+                    android:text="@string/category_personal" />
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipTransactions"
+                    style="@style/CategoryChip"
+                    android:text="@string/category_transactions" />
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipOtp"
+                    style="@style/CategoryChip"
+                    android:text="@string/category_otp" />
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipOffers"
+                    style="@style/CategoryChip"
+                    android:text="@string/category_offers" />
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipSpam"
+                    style="@style/CategoryChip"
+                    android:text="@string/category_spam" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
         <dev.octoshrimpy.quik.common.widget.QkTextView
             android:id="@+id/empty"
             style="@style/TextSecondary"
@@ -73,7 +128,7 @@
             android:gravity="center"
             android:padding="56dp"
             app:layout_constraintBottom_toTopOf="@id/bottom"
-            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintTop_toBottomOf="@id/categoryBar"
             tools:text="Your conversations will appear here"
             tools:visibility="invisible" />
 
@@ -87,7 +142,7 @@
             android:paddingBottom="8dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toTopOf="@id/bottom"
-            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintTop_toBottomOf="@id/categoryBar"
             tools:listitem="@layout/conversation_list_item" />
 
         <ImageView

@@ -34,6 +34,7 @@ import dev.octoshrimpy.quik.feature.main.MainActivityModule
 import dev.octoshrimpy.quik.feature.messageutils.MessageUtilsActivity
 import dev.octoshrimpy.quik.feature.notificationprefs.NotificationPrefsActivity
 import dev.octoshrimpy.quik.feature.notificationprefs.NotificationPrefsActivityModule
+import dev.octoshrimpy.quik.feature.otp.OtpPopupActivity
 import dev.octoshrimpy.quik.feature.qkreply.QkReplyActivity
 import dev.octoshrimpy.quik.feature.qkreply.QkReplyActivityModule
 import dev.octoshrimpy.quik.feature.scheduled.ScheduledActivity
@@ -96,5 +97,9 @@ abstract class ActivityBuilderModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = [])
     abstract fun bindBlockingActivity(): BlockingActivity
+
+    @ActivityScope
+    @ContributesAndroidInjector(modules = [])
+    abstract fun bindOtpPopupActivity(): OtpPopupActivity
 
 }

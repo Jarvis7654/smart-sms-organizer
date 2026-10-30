@@ -79,6 +79,15 @@
         <item name="android:background">@color/black</item>
     </style>
 
+    <!-- Translucent overlay host for the OTP copy popup -->
+    <style name="OtpPopupTheme" parent="AppTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Toast</item>
+    </style>
+
     <!-- Black mode. No changes needed when not in night theme -->
     <style name="AppTheme.Black" />
     <style name="AppThemeDialog.Black" />

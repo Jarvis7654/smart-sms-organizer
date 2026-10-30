@@ -34,6 +34,8 @@ import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.blocking.BlockingManager
 import dev.octoshrimpy.quik.common.ViewModelFactory
 import dev.octoshrimpy.quik.common.util.NotificationManagerImpl
+import dev.octoshrimpy.quik.common.util.OtpPopupManagerImpl
+import dev.octoshrimpy.quik.common.util.RcsManagerImpl
 import dev.octoshrimpy.quik.common.util.ShortcutManagerImpl
 import dev.octoshrimpy.quik.feature.conversationinfo.injection.ConversationInfoComponent
 import dev.octoshrimpy.quik.feature.themepicker.injection.ThemePickerComponent
@@ -48,7 +50,9 @@ import dev.octoshrimpy.quik.manager.ChangelogManagerImpl
 import dev.octoshrimpy.quik.manager.KeyManager
 import dev.octoshrimpy.quik.manager.KeyManagerImpl
 import dev.octoshrimpy.quik.manager.NotificationManager
+import dev.octoshrimpy.quik.manager.OtpPopupManager
 import dev.octoshrimpy.quik.manager.PermissionManager
+import dev.octoshrimpy.quik.manager.RcsManager
 import dev.octoshrimpy.quik.manager.PermissionManagerImpl
 import dev.octoshrimpy.quik.manager.RatingManager
 import dev.octoshrimpy.quik.manager.ReferralManager
@@ -154,10 +158,16 @@ class AppModule(private var application: Application) {
     fun provideNotificationsManager(manager: NotificationManagerImpl): NotificationManager = manager
 
     @Provides
+    fun provideOtpPopupManager(manager: OtpPopupManagerImpl): OtpPopupManager = manager
+
+    @Provides
     fun providePermissionsManager(manager: PermissionManagerImpl): PermissionManager = manager
 
     @Provides
     fun provideRatingManager(manager: RatingManagerImpl): RatingManager = manager
+
+    @Provides
+    fun provideRcsManager(manager: RcsManagerImpl): RcsManager = manager
 
     @Provides
     fun provideShortcutManager(manager: ShortcutManagerImpl): ShortcutManager = manager

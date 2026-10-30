@@ -32,6 +32,7 @@ import dev.octoshrimpy.quik.model.Conversation
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.SearchResult
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Completable
@@ -56,7 +57,8 @@ class ConversationRepositoryImpl @Inject constructor(
     private fun getConversationsBase(
         realm: Realm,
         unreadAtTop: Boolean,
-        archived: Boolean
+        archived: Boolean,
+        category: Int = MessageClassifier.CATEGORY_ALL
     ): RealmQuery<Conversation> {
         val sortOrder = mutableListOf("pinned", "draft", "lastMessage.date")
         val sortDirections = mutableListOf(Sort.DESCENDING, Sort.DESCENDING, Sort.DESCENDING)
@@ -77,15 +79,28 @@ class ConversationRepositoryImpl @Inject constructor(
             .or()
             .isNotEmpty("draft")
             .endGroup()
+            .apply { if (category != MessageClassifier.CATEGORY_ALL) equalTo("category", category) }
             .sort(sortOrder.toTypedArray(), sortDirections.toTypedArray())
     }
 
     override fun getConversations(
         unreadAtTop: Boolean,
-        archived: Boolean
+        archived: Boolean,
+        category: Int
     ): RealmResults<Conversation> =
-        getConversationsBase(Realm.getDefaultInstance(), unreadAtTop, archived)
+        getConversationsBase(Realm.getDefaultInstance(), unreadAtTop, archived, category)
             .findAllAsync()
+
+    override fun setCategory(threadId: Long, category: Int) {
+        Realm.getDefaultInstance().use { realm ->
+            realm.executeTransaction {
+                realm.where(Conversation::class.java)
+                    .equalTo("id", threadId)
+                    .findFirst()
+                    ?.category = category
+            }
+        }
+    }
 
     override fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation> =
         Realm.getDefaultInstance().use { realm ->

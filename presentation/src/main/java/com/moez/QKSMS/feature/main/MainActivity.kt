@@ -22,6 +22,7 @@ import android.Manifest
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
@@ -58,6 +59,7 @@ import dev.octoshrimpy.quik.common.widget.TextInputDialog
 import dev.octoshrimpy.quik.feature.blocking.BlockingDialog
 import dev.octoshrimpy.quik.databinding.MainActivityBinding
 import dev.octoshrimpy.quik.databinding.MainPermissionHintBinding
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.databinding.MainSyncingBinding
 import dev.octoshrimpy.quik.feature.changelog.ChangelogDialog
 import dev.octoshrimpy.quik.feature.conversations.ConversationItemTouchCallback
@@ -118,6 +120,7 @@ class MainActivity : QkThemedActivity(), MainView {
     override val changelogMoreIntent by lazy { changelogDialog.moreClicks }
     override val undoArchiveIntent: Subject<Unit> = PublishSubject.create()
     override val snackbarButtonIntent: Subject<Unit> = PublishSubject.create()
+    override val categorySelectedIntent: Subject<Int> = PublishSubject.create()
 
     private val viewModel by lazy {
         ViewModelProviders.of(this, viewModelFactory)[MainViewModel::class.java]
@@ -137,6 +140,8 @@ class MainActivity : QkThemedActivity(), MainView {
     }
     private val changelogDialog by lazy { ChangelogDialog(this) }
     private val backPressedSubject: Subject<NavItem> = PublishSubject.create()
+    private var themeColor: Int = 0
+    private var currentCategory: Int = MessageClassifier.CATEGORY_ALL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
@@ -169,6 +174,16 @@ class MainActivity : QkThemedActivity(), MainView {
         // Don't allow clicks to pass through the drawer layout
         binding.drawer.root.clicks().autoDisposable(scope()).subscribe()
 
+        // Auto-organization category chips (chip index -> classifier category is index - 1,
+        // because "All" maps to the sentinel CATEGORY_ALL)
+        listOf(binding.chipAll, binding.chipPersonal, binding.chipTransactions,
+                binding.chipOtp, binding.chipOffers, binding.chipSpam)
+            .forEachIndexed { index, chip ->
+                chip.clicks()
+                    .autoDisposable(scope())
+                    .subscribe { categorySelectedIntent.onNext(index - 1) }
+            }
+
         // Set the theme color tint to the recyclerView, progressbar, and FAB
         theme
                 .autoDisposable(scope())
@@ -196,6 +211,9 @@ class MainActivity : QkThemedActivity(), MainView {
 
                     // Set the FAB compose icon color
                     binding.compose.setTint(theme.textPrimary)
+
+                    themeColor = theme.theme
+                    renderCategoryChips(currentCategory)
                 }
     }
 
@@ -368,6 +386,28 @@ class MainActivity : QkThemedActivity(), MainView {
                 snackbarBinding.snackbarMessage.setText(R.string.main_permission_notifications)
                 snackbarBinding.snackbarButton.setText(R.string.main_permission_allow)
             }
+        }
+
+        currentCategory = when (state.page) {
+            is Inbox -> state.page.category
+            is Archived -> state.page.category
+            else -> MessageClassifier.CATEGORY_ALL
+        }
+        binding.categoryBar.setVisible(
+            (state.page is Inbox || state.page is Archived) && prefs.autoOrganize.get()
+        )
+        renderCategoryChips(currentCategory)
+    }
+
+    private fun renderCategoryChips(category: Int) {
+        val chips = listOf(binding.chipAll, binding.chipPersonal, binding.chipTransactions,
+                binding.chipOtp, binding.chipOffers, binding.chipSpam)
+        val unselectedTint = resolveThemeColor(R.attr.bubbleColor)
+        val primaryText = resolveThemeColor(android.R.attr.textColorPrimary)
+        chips.forEachIndexed { index, chip ->
+            val selected = index - 1 == category
+            chip.setBackgroundTint(if (selected) themeColor else unselectedTint)
+            chip.setTextColor(if (selected) Color.WHITE else primaryText)
         }
     }
 

@@ -21,6 +21,7 @@ package dev.octoshrimpy.quik.migration
 import android.annotation.SuppressLint
 import dev.octoshrimpy.quik.extensions.map
 import dev.octoshrimpy.quik.mapper.CursorToContactImpl
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.Preferences
 import io.realm.DynamicRealm
 import io.realm.DynamicRealmObject
@@ -37,7 +38,7 @@ class QkRealmMigration @Inject constructor(
 ) : RealmMigration {
 
     companion object {
-        const val SCHEMA_VERSION: Long = 15
+        const val SCHEMA_VERSION: Long = 16
     }
 
     @SuppressLint("ApplySharedPref")
@@ -298,6 +299,29 @@ class QkRealmMigration @Inject constructor(
             }
 
             version ++
+        }
+
+        if (version == 15L) {
+            // Smart inbox auto-organization: classify existing conversations from their
+            // last message so the category tabs are populated on first launch
+            if (realm.schema.get("Conversation")?.hasField("category") == false) {
+                realm.schema.get("Conversation")
+                    ?.addField("category", Int::class.java, FieldAttribute.REQUIRED)
+                    ?.transform { conversation ->
+                        val lastMessage = conversation.getObject("lastMessage")
+                        val category = if (lastMessage == null) {
+                            MessageClassifier.CATEGORY_PERSONAL
+                        } else {
+                            MessageClassifier.classify(
+                                lastMessage.getString("address") ?: "",
+                                lastMessage.getString("body") ?: ""
+                            )
+                        }
+                        conversation.setInt("category", category)
+                    }
+            }
+
+            version++
         }
 
         check(version >= SCHEMA_VERSION) {

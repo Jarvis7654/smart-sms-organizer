@@ -27,7 +27,13 @@ import io.realm.RealmResults
 
 interface ConversationRepository {
 
-    fun getConversations(unreadAtTop: Boolean, archived: Boolean = false): RealmResults<Conversation>
+    fun getConversations(
+        unreadAtTop: Boolean,
+        archived: Boolean = false,
+        category: Int = dev.octoshrimpy.quik.util.MessageClassifier.CATEGORY_ALL
+    ): RealmResults<Conversation>
+
+    fun setCategory(threadId: Long, category: Int)
 
     fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation>
 

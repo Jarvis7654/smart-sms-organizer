@@ -185,6 +185,15 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
 
         binding.disableScreenshots.checkbox?.isChecked = state.disableScreenshotsEnabled
 
+        binding.autoOrganize.checkbox?.isChecked = state.autoOrganizeEnabled
+
+        binding.otpPopup.checkbox?.isChecked = state.otpPopupEnabled
+
+        binding.autoDeleteOtps.checkbox?.isChecked = state.autoDeleteOtpsEnabled
+
+        binding.rcs.checkbox?.isChecked = state.rcsEnabled
+        binding.rcs.summary = state.rcsSummary
+
         when (state.syncProgress) {
             is SyncRepository.SyncProgress.Idle -> binding.syncingProgress.isVisible = false
 

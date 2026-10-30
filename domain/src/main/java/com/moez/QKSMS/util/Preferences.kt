@@ -138,6 +138,18 @@ class Preferences @Inject constructor(
 
     val autoDeduplicate = rxPrefs.getBoolean("autoDeduplicateMessages", false)
 
+    // Smart inbox auto-organization (Personal / Transactions / OTP / Offers / Spam)
+    val autoOrganize = rxPrefs.getBoolean("autoOrganize", true)
+
+    // OTP copy popup shown when a verification code arrives
+    val otpPopup = rxPrefs.getBoolean("otpPopup", true)
+
+    // Automatically delete OTP messages after 24 hours
+    val autoDeleteOtps = rxPrefs.getBoolean("autoDeleteOtps", false)
+
+    // RCS chats master switch. When off, every RCS-related feature is fully disabled
+    val rcsEnabled = rxPrefs.getBoolean("rcsEnabled", false)
+
     init {
         // Migrate from old night mode preference to new one, now that we support android Q night mode
         val nightModeSummary = rxPrefs.getInteger("nightModeSummary")

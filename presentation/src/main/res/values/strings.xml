@@ -18,7 +18,7 @@
   -->
 <resources>
 
-    <string name="app_name" translatable="false">QUIK</string>
+    <string name="app_name" translatable="false">Smart SMS</string>
 
     <string name="shortcut_compose_long_label">New conversation</string>
     <string name="shortcut_compose_short_label">Compose</string>
@@ -305,6 +305,36 @@
     <string name="settings_delivery_summary">Confirm that messages were sent successfully</string>
     <string name="settings_unread_at_top_title">Unread at the top</string>
     <string name="settings_unread_at_top_summary">Show unread conversations at the top</string>
+
+    <!-- Smart inbox auto-organization -->
+    <string name="settings_auto_organize_title">Auto-organize inbox</string>
+    <string name="settings_auto_organize_summary">Sort messages into Personal, Transactions, OTP, Offers and Spam</string>
+    <string name="category_all">All</string>
+    <string name="category_personal">Personal</string>
+    <string name="category_transactions">Transactions</string>
+    <string name="category_otp">OTP</string>
+    <string name="category_offers">Offers</string>
+    <string name="category_spam">Spam</string>
+
+    <!-- OTP copy popup -->
+    <string name="settings_otp_popup_title">OTP popup</string>
+    <string name="settings_otp_popup_summary">Show a popup and copy verification codes automatically. Needs "draw over other apps" permission</string>
+    <string name="otp_popup_title">Verification code</string>
+    <string name="otp_popup_copied">Copied to clipboard</string>
+    <string name="otp_popup_dismiss">Dismiss</string>
+    <string name="otp_popup_default_sender">New message</string>
+    <string name="otp_popup_clipboard_label">Verification code</string>
+    <string name="notification_action_copy_code">Copy code</string>
+
+    <!-- Auto-delete OTPs -->
+    <string name="settings_auto_delete_otps_title">Auto-delete OTPs</string>
+    <string name="settings_auto_delete_otps_summary">Delete OTP messages 24 hours after they arrive</string>
+
+    <!-- RCS chats -->
+    <string name="settings_rcs_title">RCS chats</string>
+    <string name="settings_rcs_summary_off">Off — all RCS features are disabled</string>
+    <string name="settings_rcs_summary_on_available">On — RCS is available on this device</string>
+    <string name="settings_rcs_summary_on_unavailable">On — RCS not detected on this device; sending via SMS</string>
     <string name="settings_signature_title">Signature</string>
     <string name="settings_signature_summary">Add a signature to the end of your messages</string>
     <string name="settings_unicode_title">Strip accents</string>

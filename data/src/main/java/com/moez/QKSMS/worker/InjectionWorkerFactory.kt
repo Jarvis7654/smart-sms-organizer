@@ -27,6 +27,7 @@ import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.ActiveConversationManager
 import dev.octoshrimpy.quik.manager.NotificationManager
+import dev.octoshrimpy.quik.manager.OtpPopupManager
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
@@ -50,6 +51,7 @@ class InjectionWorkerFactory @Inject constructor(
     private val syncRepo: SyncRepository,
     private val filterRepo: MessageContentFilterRepository,
     private val contactRepo: ContactRepository,
+    private val otpPopupManager: OtpPopupManager,
 
 ) : WorkerFactory() {
     override fun createWorker(
@@ -76,6 +78,12 @@ class InjectionWorkerFactory @Inject constructor(
                 instance.updateBadge =  updateBadge
                 instance.filterRepo = filterRepo
                 instance.contactsRepo = contactRepo
+                instance.otpPopupManager = otpPopupManager
+            }
+            is AutoDeleteOtpWorker -> {
+                instance.prefs = prefs
+                instance.conversationRepo = conversationRepo
+                instance.messageRepo = messageRepo
             }
             is ReceiveMmsWorker -> {
                 instance.syncRepo = syncRepo

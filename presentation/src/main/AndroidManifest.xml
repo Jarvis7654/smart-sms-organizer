@@ -105,6 +105,12 @@
                 android:value=".common.util.QkChooserTargetService" />
         </activity>
         <activity android:name=".feature.messageutils.MessageUtilsActivity" />
+        <activity
+            android:name=".feature.otp.OtpPopupActivity"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/OtpPopupTheme"
+            android:noHistory="true" />
         <activity android:name=".feature.settings.SettingsActivity" />
         <activity android:name=".feature.settings.about.AboutActivity" />
         <activity

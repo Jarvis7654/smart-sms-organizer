@@ -25,11 +25,13 @@ import androidx.work.WorkerParameters
 import dev.octoshrimpy.quik.blocking.BlockingClient
 import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.NotificationManager
+import dev.octoshrimpy.quik.manager.OtpPopupManager
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.Preferences
 import timber.log.Timber
 import javax.inject.Inject
@@ -45,6 +47,7 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
     @Inject lateinit var prefs: Preferences
     @Inject lateinit var messageRepo: MessageRepository
     @Inject lateinit var notificationManager: NotificationManager
+    @Inject lateinit var otpPopupManager: OtpPopupManager
     @Inject lateinit var updateBadge: UpdateBadge
     @Inject lateinit var shortcutManager: ShortcutManager
     @Inject lateinit var filterRepo: MessageContentFilterRepository
@@ -105,6 +108,18 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
         if (conversation.blocked) {
             Timber.v("no notifications for blocked")
             return Result.failure(inputData)
+        }
+
+        // Smart inbox auto-organization: classify the conversation by its latest message
+        if (prefs.autoOrganize.get()) {
+            val category = MessageClassifier.classify(message.address, message.getText())
+            conversationRepo.setCategory(message.threadId, category)
+        }
+
+        // SMS Organizer style OTP popup: copy the code to the clipboard over a translucent
+        // overlay when the user granted "draw over other apps"
+        MessageClassifier.extractOtp(message.getText())?.let { code ->
+            otpPopupManager.showOtpPopup(code, message.address)
         }
 
         // unarchive conversation if necessary

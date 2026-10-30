@@ -29,6 +29,7 @@ import dev.octoshrimpy.quik.common.util.Colors
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.interactor.SyncMessages
+import dev.octoshrimpy.quik.manager.RcsManager
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.NightModeManager
 import dev.octoshrimpy.quik.util.Preferences
@@ -47,6 +48,7 @@ class SettingsPresenter @Inject constructor(
     private val externalNavigator: ExternalNavigator,
     private val nightModeManager: NightModeManager,
     private val prefs: Preferences,
+    private val rcsManager: RcsManager,
     private val syncMessages: SyncMessages
 ) : QkPresenter<SettingsView, SettingsState>(SettingsState(
         nightModeId = prefs.nightMode.get()
@@ -143,6 +145,20 @@ class SettingsPresenter @Inject constructor(
         disposables += prefs.disableScreenshots.asObservable()
             .subscribe { enabled -> newState { copy(disableScreenshotsEnabled = enabled) } }
 
+        disposables += prefs.autoOrganize.asObservable()
+            .subscribe { enabled -> newState { copy(autoOrganizeEnabled = enabled) } }
+
+        disposables += prefs.otpPopup.asObservable()
+            .subscribe { enabled -> newState { copy(otpPopupEnabled = enabled) } }
+
+        disposables += prefs.autoDeleteOtps.asObservable()
+            .subscribe { enabled -> newState { copy(autoDeleteOtpsEnabled = enabled) } }
+
+        disposables += prefs.rcsEnabled.asObservable()
+            .subscribe { enabled ->
+                newState { copy(rcsEnabled = enabled, rcsSummary = rcsManager.getStatusSummary() ?: "") }
+            }
+
         disposables += syncRepo.syncProgress
                 .sample(16, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
@@ -215,6 +231,14 @@ class SettingsPresenter @Inject constructor(
                         R.id.messsageLinkHandling -> view.showMessageLinkHandlingDialogPicker()
 
                         R.id.disableScreenshots -> prefs.disableScreenshots.set(!prefs.disableScreenshots.get())
+
+                        R.id.autoOrganize -> prefs.autoOrganize.set(!prefs.autoOrganize.get())
+
+                        R.id.otpPopup -> prefs.otpPopup.set(!prefs.otpPopup.get())
+
+                        R.id.autoDeleteOtps -> prefs.autoDeleteOtps.set(!prefs.autoDeleteOtps.get())
+
+                        R.id.rcs -> prefs.rcsEnabled.set(!prefs.rcsEnabled.get())
 
                         R.id.sync -> syncMessages.execute(Unit)
 

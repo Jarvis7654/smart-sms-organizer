@@ -39,6 +39,9 @@ open class Conversation(
     var name: String = "", // custom title
 
     var sendAsGroup: Boolean = true,
+
+    // Auto-organization category, one of MessageClassifier.CATEGORY_*
+    var category: Int = 0,
 ) : RealmObject() {
 
     val date: Long get() = lastMessage?.date ?: if (draft.isNotEmpty()) draftDate else 0

@@ -42,6 +42,10 @@ open class Conversation(
 
     // Auto-organization category, one of MessageClassifier.CATEGORY_*
     var category: Int = 0,
+
+    // When set (not null), every future incoming message in this conversation is forced
+    // into this category — SMS Organizer's "Move future SMS" rule
+    var categoryOverride: Int? = null,
 ) : RealmObject() {
 
     val date: Long get() = lastMessage?.date ?: if (draft.isNotEmpty()) draftDate else 0

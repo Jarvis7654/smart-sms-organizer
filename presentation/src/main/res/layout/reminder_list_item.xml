@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Smart SMS Organizer contributors
+  ~
+  ~ This file is part of Smart SMS Organizer, based on QUIK/QKSMS.
+  ~ Licensed under the GNU General Public License v3.0.
+  -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+    android:background="@drawable/reminder_card"
+    android:elevation="2dp"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/typeIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/circle_ripple"
+        android:backgroundTint="@color/categoryUpcoming"
+        android:contentDescription="@string/upcoming_reminders"
+        android:padding="9dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/white"
+        tools:src="@drawable/ic_reminder_bill" />
+
+    <dev.octoshrimpy.quik.common.widget.QkTextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:lines="1"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/dismiss"
+        app:layout_constraintStart_toEndOf="@id/typeIcon"
+        app:layout_constraintTop_toTopOf="@id/typeIcon"
+        app:textSize="primary"
+        tools:text="Bill due" />
+
+    <dev.octoshrimpy.quik.common.widget.QkTextView
+        android:id="@+id/due"
+        style="@style/TextSecondary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:lines="1"
+        app:layout_constraintEnd_toStartOf="@id/dismiss"
+        app:layout_constraintStart_toEndOf="@id/typeIcon"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        tools:text="Today, 5:30 PM" />
+
+    <dev.octoshrimpy.quik.common.widget.QkTextView
+        android:id="@+id/amount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="2dp"
+        android:lines="1"
+        android:textColor="@color/amountDebit"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/dismiss"
+        app:layout_constraintStart_toEndOf="@id/typeIcon"
+        app:layout_constraintTop_toBottomOf="@id/due"
+        tools:text="Rs 1,250" />
+
+    <ImageView
+        android:id="@+id/dismiss"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/upcoming_dismiss"
+        android:padding="10dp"
+        android:src="@drawable/ic_close_black_24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="?android:attr/textColorTertiary" />
+
+    <dev.octoshrimpy.quik.common.widget.QkTextView
+        android:id="@+id/subtitle"
+        style="@style/TextTertiary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/amount"
+        tools:text="From JD-SBIIN" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

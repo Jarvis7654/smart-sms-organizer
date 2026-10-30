@@ -99,6 +99,12 @@ interface MessageRepository {
 
     fun deleteMessages(messageIds: Collection<Long>)
 
+    /** Star / unstar messages (app-internal bookmark, shown in the Starred folder) */
+    fun setStarred(messageIds: Collection<Long>, starred: Boolean)
+
+    /** Thread ids that contain at least one starred message */
+    fun getStarredThreadIds(): List<Long>
+
     fun getOldMessageCounts(maxAgeDays: Int): Map<Long, Int>
 
     fun deleteOldMessages(maxAgeDays: Int)

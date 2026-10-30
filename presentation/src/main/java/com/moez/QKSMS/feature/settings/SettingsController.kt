@@ -191,9 +191,6 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
 
         binding.autoDeleteOtps.checkbox?.isChecked = state.autoDeleteOtpsEnabled
 
-        binding.rcs.checkbox?.isChecked = state.rcsEnabled
-        binding.rcs.summary = state.rcsSummary
-
         when (state.syncProgress) {
             is SyncRepository.SyncProgress.Idle -> binding.syncingProgress.isVisible = false
 

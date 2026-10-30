@@ -137,6 +137,9 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
 
         // register, or re-register, the daily OTP auto-delete worker
         dev.octoshrimpy.quik.worker.AutoDeleteOtpWorker.schedule()
+
+        // register, or re-register, the reminder due-soon notification worker
+        dev.octoshrimpy.quik.worker.ReminderNotifyWorker.schedule()
     }
 
     override fun activityInjector(): AndroidInjector<Activity> {

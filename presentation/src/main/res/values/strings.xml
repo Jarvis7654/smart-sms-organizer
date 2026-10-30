@@ -330,11 +330,6 @@
     <string name="settings_auto_delete_otps_title">Auto-delete OTPs</string>
     <string name="settings_auto_delete_otps_summary">Delete OTP messages 24 hours after they arrive</string>
 
-    <!-- RCS chats -->
-    <string name="settings_rcs_title">RCS chats</string>
-    <string name="settings_rcs_summary_off">Off — all RCS features are disabled</string>
-    <string name="settings_rcs_summary_on_available">On — RCS is available on this device</string>
-    <string name="settings_rcs_summary_on_unavailable">On — RCS not detected on this device; sending via SMS</string>
     <string name="settings_signature_title">Signature</string>
     <string name="settings_signature_summary">Add a signature to the end of your messages</string>
     <string name="settings_unicode_title">Strip accents</string>
@@ -594,4 +589,36 @@
     <string name="stt_toast_extra_prompt">Speak your message</string>
 
     <string name="messages_text_share_file_error">Oops! Something went wrong while sharing</string>
+
+    <!-- SMS Organizer clone: tabs, upcoming, star, move-to -->
+    <string name="upcoming_title">Upcoming</string>
+    <string name="upcoming_reminders">Reminders</string>
+    <string name="upcoming_today">Today</string>
+    <string name="upcoming_tomorrow">Tomorrow</string>
+    <string name="upcoming_yesterday">Yesterday</string>
+    <string name="upcoming_empty">No reminders in sight
+Bills, journeys and deliveries will show up here</string>
+    <string name="upcoming_add_reminder">Add reminder</string>
+    <string name="upcoming_notification_title">You have an upcoming event</string>
+    <string name="upcoming_notification_text">%1$s · %2$s</string>
+    <string name="upcoming_dismiss">Dismiss</string>
+    <string name="upcoming_no_date">Date unknown</string>
+    <string name="upcoming_from_sender">From %1$s</string>
+    <string name="upcoming_reminder_name_hint">Reminder name</string>
+    <string name="upcoming_reminder_description_hint">Description (optional)</string>
+    <string name="upcoming_pick_date">Pick date &amp; time</string>
+    <string name="upcoming_reminder_added">Reminder added</string>
+    <string name="upcoming_reminder_needs_name">Enter a reminder name</string>
+    <string name="starred_title">Starred</string>
+    <string name="starred_empty">You have not starred any SMS yet. Open a conversation and star a message from its menu.</string>
+    <string name="main_menu_move_to">Move to</string>
+    <string name="compose_menu_star">Star SMS</string>
+    <string name="main_menu_mark_all_read">Mark all as read</string>
+    <string name="move_to_title">Move to</string>
+    <string name="move_to_future">Also move future messages from this sender</string>
+    <string name="moved_toast">%1$d conversations moved to %2$s</string>
+    <string name="otp_popup_title_offer">Offer code</string>
+    <string name="otp_popup_offer_copied">Offer Code Copied</string>
+    <string name="otp_popup_copy">Copy</string>
+    <string name="otp_popup_copied_toast">OTP Copied</string>
 </resources>

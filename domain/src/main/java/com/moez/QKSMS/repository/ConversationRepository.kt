@@ -33,7 +33,10 @@ interface ConversationRepository {
         category: Int = dev.octoshrimpy.quik.util.MessageClassifier.CATEGORY_ALL
     ): RealmResults<Conversation>
 
-    fun setCategory(threadId: Long, category: Int)
+    fun setCategory(threadId: Long, category: Int, alsoForFuture: Boolean = false)
+
+    /** Clears the "move future SMS" rule for the given conversations */
+    fun clearCategoryOverride(threadIds: Collection<Long>)
 
     fun getConversationsSnapshot(unreadAtTop: Boolean): List<Conversation>
 

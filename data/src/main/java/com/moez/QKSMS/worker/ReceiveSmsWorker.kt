@@ -27,12 +27,15 @@ import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.manager.OtpPopupManager
 import dev.octoshrimpy.quik.manager.ShortcutManager
+import dev.octoshrimpy.quik.model.Reminder
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.repository.ReminderRepository
 import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.Preferences
+import dev.octoshrimpy.quik.util.ReminderExtractor
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -52,6 +55,7 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
     @Inject lateinit var shortcutManager: ShortcutManager
     @Inject lateinit var filterRepo: MessageContentFilterRepository
     @Inject lateinit var contactsRepo: ContactRepository
+    @Inject lateinit var reminderRepo: ReminderRepository
 
     override fun doWork(): Result {
         Timber.v("started")
@@ -110,16 +114,38 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
             return Result.failure(inputData)
         }
 
-        // Smart inbox auto-organization: classify the conversation by its latest message
+        // Smart inbox auto-organization: classify by latest message, unless the user set
+        // a "move future SMS" rule for this conversation
         if (prefs.autoOrganize.get()) {
-            val category = MessageClassifier.classify(message.address, message.getText())
+            val category = conversation.categoryOverride
+                ?: MessageClassifier.classify(message.address, message.getText())
             conversationRepo.setCategory(message.threadId, category)
         }
 
-        // SMS Organizer style OTP popup: copy the code to the clipboard over a translucent
-        // overlay when the user granted "draw over other apps"
-        MessageClassifier.extractOtp(message.getText())?.let { code ->
-            otpPopupManager.showOtpPopup(code, message.address)
+        // SMS Organizer style popup: verification codes and offer/coupon codes are copied
+        // over a translucent overlay when the user granted "draw over other apps"
+        val body = message.getText()
+        val otpCode = MessageClassifier.extractOtp(body)
+        val offerCode = MessageClassifier.extractOfferCode(body)
+        when {
+            otpCode != null -> otpPopupManager.showOtpPopup(otpCode, message.address, false)
+            offerCode != null -> otpPopupManager.showOtpPopup(offerCode, message.address, true)
+        }
+
+        // "Upcoming" reminders: bills due, journeys, appointments, orders
+        ReminderExtractor.extract(body, message.address, System.currentTimeMillis())?.let { extracted ->
+            reminderRepo.insertOrUpdate(
+                Reminder(
+                    id = message.id,
+                    type = extracted.type,
+                    title = extracted.title,
+                    subtitle = extracted.subtitle,
+                    amount = extracted.amount,
+                    dueDate = extracted.dueDate,
+                    threadId = message.threadId,
+                    messageId = message.id
+                )
+            )
         }
 
         // unarchive conversation if necessary

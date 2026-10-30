@@ -20,6 +20,7 @@ package dev.octoshrimpy.quik.manager
 
 import android.app.Notification
 import androidx.core.app.NotificationCompat
+import dev.octoshrimpy.quik.model.Reminder
 
 interface NotificationManager {
 
@@ -28,6 +29,9 @@ interface NotificationManager {
     fun update(threadId: Long)
 
     fun notifyFailed(threadId: Long)
+
+    /** Posts "due soon" notifications for the given reminders and marks them notified */
+    fun notifyReminders(reminders: List<Reminder>)
 
     fun createNotificationChannel(threadId: Long = 0L)
 

@@ -35,6 +35,7 @@ import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.databinding.ConversationListItemBinding
 import dev.octoshrimpy.quik.model.Conversation
+import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
@@ -131,6 +132,23 @@ class ConversationsAdapter @Inject constructor(
 
         binding.pinned.isVisible = conversation.pinned
         binding.unread.setTint(theme)
+
+        // SMS Organizer style: show the transaction amount on the row, green for credit
+        // and red for debit
+        val lastBody = lastMessage?.getText() ?: ""
+        val amount = MessageClassifier.extractAmount(lastBody)
+        if (conversation.category == MessageClassifier.CATEGORY_TRANSACTION && amount != null) {
+            binding.amount.isVisible = true
+            binding.amount.text = amount
+            binding.amount.setTextColor(
+                context.getColor(
+                    if (MessageClassifier.isCredit(lastBody)) R.color.amountCredit
+                    else R.color.amountDebit
+                )
+            )
+        } else {
+            binding.amount.isVisible = false
+        }
     }
 
     override fun getItemId(position: Int): Long {

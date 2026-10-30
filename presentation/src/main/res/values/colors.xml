@@ -322,4 +322,15 @@
         <item>#263238</item>
     </array>
 
+    <!-- SMS Organizer clone palette -->
+    <color name="organizerPrimary">#4A90E2</color>
+    <color name="organizerAccent">#FFB20D</color>
+    <color name="amountCredit">#008900</color>
+    <color name="amountDebit">#E70007</color>
+    <color name="categoryPersonal">#4A90E2</color>
+    <color name="categoryTransaction">#00897B</color>
+    <color name="categoryOtp">#FF8F00</color>
+    <color name="categoryOffers">#EC407A</color>
+    <color name="categorySpam">#8E8E93</color>
+    <color name="categoryUpcoming">#5C6BC0</color>
 </resources>

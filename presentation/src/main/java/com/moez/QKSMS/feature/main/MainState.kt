@@ -19,8 +19,10 @@
 package dev.octoshrimpy.quik.feature.main
 
 import dev.octoshrimpy.quik.model.Conversation
+import dev.octoshrimpy.quik.model.Reminder
 import dev.octoshrimpy.quik.model.SearchResult
 import dev.octoshrimpy.quik.repository.SyncRepository
+import dev.octoshrimpy.quik.util.MessageClassifier
 import io.realm.RealmResults
 
 data class MainState(
@@ -33,7 +35,11 @@ data class MainState(
     val smsPermission: Boolean = true,
     val contactPermission: Boolean = true,
     val notificationPermission: Boolean = true,
-    val scheduledConversationIds: Set<Long> = emptySet()
+    val scheduledConversationIds: Set<Long> = emptySet(),
+    /** Unread conversation count per organizer tab (classifier category) */
+    val tabCounts: Map<Int, Int> = emptyMap(),
+    /** Active reminders for the Upcoming tab */
+    val reminders: List<Reminder> = emptyList()
 )
 
 sealed class MainPage
@@ -44,7 +50,7 @@ data class Inbox(
     val markRead: Boolean = false,
     val data: RealmResults<Conversation>? = null,
     val selected: Int = 0,
-    val category: Int = dev.octoshrimpy.quik.util.MessageClassifier.CATEGORY_ALL
+    val category: Int = MessageClassifier.CATEGORY_ALL
 ) : MainPage()
 
 data class Searching(
@@ -58,5 +64,14 @@ data class Archived(
     val markRead: Boolean = false,
     val data: RealmResults<Conversation>? = null,
     val selected: Int = 0,
-    val category: Int = dev.octoshrimpy.quik.util.MessageClassifier.CATEGORY_ALL
+    val category: Int = MessageClassifier.CATEGORY_ALL
+) : MainPage()
+
+/** SMS Organizer's Upcoming tab: reminders extracted from messages + custom reminders */
+class Upcoming : MainPage()
+
+/** Conversations containing starred messages */
+data class Starred(
+    val data: RealmResults<Conversation>? = null,
+    val selected: Int = 0
 ) : MainPage()

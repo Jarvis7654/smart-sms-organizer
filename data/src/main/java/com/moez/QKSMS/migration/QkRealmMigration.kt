@@ -23,6 +23,7 @@ import dev.octoshrimpy.quik.extensions.map
 import dev.octoshrimpy.quik.mapper.CursorToContactImpl
 import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.Preferences
+import dev.octoshrimpy.quik.util.ReminderExtractor
 import io.realm.DynamicRealm
 import io.realm.DynamicRealmObject
 import io.realm.FieldAttribute
@@ -38,7 +39,7 @@ class QkRealmMigration @Inject constructor(
 ) : RealmMigration {
 
     companion object {
-        const val SCHEMA_VERSION: Long = 16
+        const val SCHEMA_VERSION: Long = 17
     }
 
     @SuppressLint("ApplySharedPref")
@@ -319,6 +320,62 @@ class QkRealmMigration @Inject constructor(
                         }
                         conversation.setInt("category", category)
                     }
+            }
+
+            version++
+        }
+
+        if (version == 16L) {
+            // Starred messages (SMS Organizer style)
+            if (realm.schema.get("Message")?.hasField("starred") == false) {
+                realm.schema.get("Message")
+                    ?.addField("starred", Boolean::class.java, FieldAttribute.REQUIRED)
+            }
+
+            // "Move future SMS" rule: per-conversation category override
+            if (realm.schema.get("Conversation")?.hasField("categoryOverride") == false) {
+                realm.schema.get("Conversation")
+                    ?.addField("categoryOverride", Int::class.java)
+            }
+
+            // Reminders extracted from SMS + created by the user ("Upcoming" tab)
+            if (realm.schema.get("Reminder") == null) {
+                realm.schema.create("Reminder")
+                    .addField("id", Long::class.java, FieldAttribute.PRIMARY_KEY, FieldAttribute.REQUIRED)
+                    .addField("type", String::class.java, FieldAttribute.REQUIRED)
+                    .addField("title", String::class.java, FieldAttribute.REQUIRED)
+                    .addField("subtitle", String::class.java, FieldAttribute.REQUIRED)
+                    .addField("amount", String::class.java, FieldAttribute.REQUIRED)
+                    .addField("dueDate", Long::class.java, FieldAttribute.INDEXED, FieldAttribute.REQUIRED)
+                    .addField("threadId", Long::class.java, FieldAttribute.REQUIRED)
+                    .addField("messageId", Long::class.java, FieldAttribute.REQUIRED)
+                    .addField("dismissed", Boolean::class.java, FieldAttribute.INDEXED, FieldAttribute.REQUIRED)
+                    .addField("notified", Boolean::class.java, FieldAttribute.REQUIRED)
+                    .addField("createdAt", Long::class.java, FieldAttribute.REQUIRED)
+
+                // Backfill: parse the last message of each conversation into a reminder
+                val latest = realm.where("Message")
+                    .sort("date", Sort.DESCENDING)
+                    .distinct("threadId")
+                    .findAll()
+                for (msg in latest) {
+                    val body = msg.getString("body") ?: continue
+                    val address = msg.getString("address") ?: ""
+                    val reminder = ReminderExtractor.extract(body, address, System.currentTimeMillis())
+                        ?: continue
+                    realm.createObject("Reminder", msg.getLong("id")).apply {
+                        setString("type", reminder.type)
+                        setString("title", reminder.title)
+                        setString("subtitle", reminder.subtitle)
+                        setString("amount", reminder.amount)
+                        setLong("dueDate", reminder.dueDate)
+                        setLong("threadId", msg.getLong("threadId"))
+                        setLong("messageId", msg.getLong("id"))
+                        setBoolean("dismissed", false)
+                        setBoolean("notified", false)
+                        setLong("createdAt", System.currentTimeMillis())
+                    }
+                }
             }
 
             version++

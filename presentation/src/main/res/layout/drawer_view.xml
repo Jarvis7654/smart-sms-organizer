@@ -63,6 +63,22 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/starred"
+            style="@style/DrawerRow">
+
+            <ImageView
+                android:id="@+id/starredIcon"
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_star_accent_24dp"
+                tools:tint="?android:attr/textColorSecondary" />
+
+            <dev.octoshrimpy.quik.common.widget.QkTextView
+                style="@style/DrawerText"
+                android:text="@string/starred_title" />
+
+        </LinearLayout>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"

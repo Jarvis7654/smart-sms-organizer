@@ -5,7 +5,7 @@
   ~ This file is part of Smart SMS Organizer, based on QUIK/QKSMS.
   ~ Licensed under the GNU General Public License v3.0.
   -->
-<androidx.constraintlayout.widget.ConstraintLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -15,40 +15,52 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/popupCard"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="32dp"
+        android:layout_gravity="bottom"
         android:background="@drawable/otp_popup_card"
         android:elevation="16dp"
-        android:orientation="vertical"
-        android:padding="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_max="420dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp">
+
+        <ImageView
+            android:id="@+id/popupIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/circle_ripple"
+            android:backgroundTint="@color/organizerPrimary"
+            android:contentDescription="@string/otp_popup_title"
+            android:padding="9dp"
+            android:src="@drawable/ic_otp_black_24dp"
+            app:tint="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <dev.octoshrimpy.quik.common.widget.QkTextView
+            android:id="@+id/popupTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/otp_popup_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/popupIcon"
+            app:layout_constraintTop_toTopOf="@id/popupIcon"
+            app:textSize="secondary" />
 
         <dev.octoshrimpy.quik.common.widget.QkTextView
             android:id="@+id/popupSender"
             style="@style/TextSecondary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:maxLines="1"
             android:ellipsize="end"
+            app:layout_constraintBottom_toBottomOf="@id/popupIcon"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/popupIcon"
             tools:text="JD-SBIIN" />
-
-        <dev.octoshrimpy.quik.common.widget.QkTextView
-            android:id="@+id/popupTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/otp_popup_title"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/popupSender"
-            app:textSize="secondary" />
 
         <dev.octoshrimpy.quik.common.widget.QkTextView
             android:id="@+id/popupCode"
@@ -56,41 +68,44 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:fontFamily="sans-serif-medium"
-            android:letterSpacing="0.15"
+            android:letterSpacing="0.12"
             android:textColor="?android:attr/textColorPrimary"
-            android:textSize="36sp"
+            android:textSize="32sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/popupTitle"
-            tools:text="1 2 3 4 5 6" />
+            app:layout_constraintTop_toBottomOf="@id/popupIcon"
+            tools:text="123456" />
 
         <dev.octoshrimpy.quik.common.widget.QkTextView
-            android:id="@+id/popupCopied"
-            style="@style/TextSecondary"
+            android:id="@+id/popupCopy"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/otp_popup_copied"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/otp_copy_button"
+            android:gravity="center"
+            android:text="@string/otp_popup_copy"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/popupDismiss"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/popupCode"
-            tools:visibility="visible" />
+            app:layout_constraintHorizontal_weight="1" />
 
         <dev.octoshrimpy.quik.common.widget.QkTextView
             android:id="@+id/popupDismiss"
-            style="@style/TextSecondary"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="end"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:gravity="center"
             android:text="@string/otp_popup_dismiss"
+            android:textColor="@color/organizerPrimary"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/popupCopied" />
+            app:layout_constraintStart_toEndOf="@id/popupCopy"
+            app:layout_constraintTop_toTopOf="@id/popupCopy"
+            app:layout_constraintHorizontal_weight="1" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>

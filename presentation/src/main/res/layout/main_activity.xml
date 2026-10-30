@@ -112,6 +112,11 @@
                     android:text="@string/category_offers" />
 
                 <dev.octoshrimpy.quik.common.widget.QkTextView
+                    android:id="@+id/chipUpcoming"
+                    style="@style/CategoryChip"
+                    android:text="@string/upcoming_title" />
+
+                <dev.octoshrimpy.quik.common.widget.QkTextView
                     android:id="@+id/chipSpam"
                     style="@style/CategoryChip"
                     android:text="@string/category_spam" />

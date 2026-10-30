@@ -23,12 +23,14 @@ import android.animation.ObjectAnimator
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.CheckBox
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -50,11 +52,16 @@ import dev.octoshrimpy.quik.common.androidxcompat.drawerOpen
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
 import dev.octoshrimpy.quik.common.util.extensions.autoScrollToStart
 import dev.octoshrimpy.quik.common.util.extensions.dismissKeyboard
+import dev.octoshrimpy.quik.common.util.extensions.dpToPx
+import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.common.util.extensions.scrapViews
 import dev.octoshrimpy.quik.common.util.extensions.setBackgroundTint
 import dev.octoshrimpy.quik.common.util.extensions.setTint
 import dev.octoshrimpy.quik.common.util.extensions.setVisible
+import dev.octoshrimpy.quik.common.util.ReminderFormatter
+import dev.octoshrimpy.quik.common.widget.QkEditText
+import dev.octoshrimpy.quik.common.widget.QkTextView
 import dev.octoshrimpy.quik.common.widget.TextInputDialog
 import dev.octoshrimpy.quik.feature.blocking.BlockingDialog
 import dev.octoshrimpy.quik.databinding.MainActivityBinding
@@ -79,6 +86,7 @@ class MainActivity : QkThemedActivity(), MainView {
     @Inject lateinit var externalNavigator: ExternalNavigator
     @Inject lateinit var conversationsAdapter: ConversationsAdapter
     @Inject lateinit var drawerBadgesExperiment: DrawerBadgesExperiment
+    @Inject lateinit var remindersAdapter: RemindersAdapter
     @Inject lateinit var searchAdapter: SearchAdapter
     @Inject lateinit var itemTouchCallback: ConversationItemTouchCallback
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -101,6 +109,7 @@ class MainActivity : QkThemedActivity(), MainView {
                 backPressedSubject,
                 binding.drawer.inbox.clicks().map { NavItem.INBOX },
                 binding.drawer.archived.clicks().map { NavItem.ARCHIVED },
+                binding.drawer.starred.clicks().map { NavItem.STARRED },
                 binding.drawer.backup.clicks().map { NavItem.BACKUP },
                 binding.drawer.scheduled.clicks().map { NavItem.SCHEDULED },
                 binding.drawer.blocking.clicks().map { NavItem.BLOCKING },
@@ -121,6 +130,31 @@ class MainActivity : QkThemedActivity(), MainView {
     override val undoArchiveIntent: Subject<Unit> = PublishSubject.create()
     override val snackbarButtonIntent: Subject<Unit> = PublishSubject.create()
     override val categorySelectedIntent: Subject<Int> = PublishSubject.create()
+    override val reminderDismissIntent: Subject<Long> = PublishSubject.create()
+    override val reminderCreatedIntent: Subject<Triple<String, String, Long>> = PublishSubject.create()
+    override val moveToCategoryIntent: Subject<Triple<List<Long>, Int, Boolean>> = PublishSubject.create()
+
+    /** The organizer tabs in display order, with their classifier category ids */
+    private val tabs by lazy {
+        listOf(
+            binding.chipAll to R.string.category_all,
+            binding.chipPersonal to R.string.category_personal,
+            binding.chipTransactions to R.string.category_transactions,
+            binding.chipOtp to R.string.category_otp,
+            binding.chipOffers to R.string.category_offers,
+            binding.chipUpcoming to R.string.upcoming_title,
+            binding.chipSpam to R.string.category_spam
+        )
+    }
+    private val tabCategories = intArrayOf(
+        MessageClassifier.CATEGORY_ALL,
+        MessageClassifier.CATEGORY_PERSONAL,
+        MessageClassifier.CATEGORY_TRANSACTION,
+        MessageClassifier.CATEGORY_OTP,
+        MessageClassifier.CATEGORY_OFFERS,
+        MainViewModel.TAB_UPCOMING,
+        MessageClassifier.CATEGORY_SPAM
+    )
 
     private val viewModel by lazy {
         ViewModelProviders.of(this, viewModelFactory)[MainViewModel::class.java]
@@ -174,14 +208,25 @@ class MainActivity : QkThemedActivity(), MainView {
         // Don't allow clicks to pass through the drawer layout
         binding.drawer.root.clicks().autoDisposable(scope()).subscribe()
 
-        // Auto-organization category chips (chip index -> classifier category is index - 1,
-        // because "All" maps to the sentinel CATEGORY_ALL)
-        listOf(binding.chipAll, binding.chipPersonal, binding.chipTransactions,
-                binding.chipOtp, binding.chipOffers, binding.chipSpam)
-            .forEachIndexed { index, chip ->
-                chip.clicks()
-                    .autoDisposable(scope())
-                    .subscribe { categorySelectedIntent.onNext(index - 1) }
+        // Organizer tabs (values map 1:1 with the tabCategories array)
+        tabs.forEachIndexed { index, (chip, _) ->
+            chip.clicks()
+                .autoDisposable(scope())
+                .subscribe { categorySelectedIntent.onNext(tabCategories[index]) }
+        }
+
+        // Reminder dismiss from the Upcoming tab
+        remindersAdapter.dismissClicks
+            .autoDisposable(scope())
+            .subscribe(reminderDismissIntent)
+
+        // "Move to" selection action opens the recategorize dialog
+        optionsItemIntent
+            .filter { itemId -> itemId == R.id.move_to }
+            .withLatestFrom(conversationsSelectedIntent) { _, conversations -> conversations }
+            .autoDisposable(scope())
+            .subscribe { conversations ->
+                if (conversations.isNotEmpty()) showMoveToDialog(conversations)
             }
 
         // Set the theme color tint to the recyclerView, progressbar, and FAB
@@ -213,7 +258,6 @@ class MainActivity : QkThemedActivity(), MainView {
                     binding.compose.setTint(theme.textPrimary)
 
                     themeColor = theme.theme
-                    renderCategoryChips(currentCategory)
                 }
     }
 
@@ -278,6 +322,10 @@ class MainActivity : QkThemedActivity(), MainView {
                     selectedConversations > 1
             findItem(R.id.block)?.isVisible = selectedConversations != 0
             findItem(R.id.rename)?.isVisible = selectedConversations == 1
+            findItem(R.id.move_to)?.isVisible = selectedConversations != 0
+            findItem(R.id.mark_all_read)?.isVisible = selectedConversations == 0 &&
+                    (state.page is Inbox || state.page is Archived || state.page is Starred)
+            findItem(R.id.add_reminder)?.isVisible = state.page is Upcoming
         }
 
         binding.drawer.rateLayout.setVisible(state.showRating)
@@ -320,11 +368,35 @@ class MainActivity : QkThemedActivity(), MainView {
                 binding.empty.setText(R.string.archived_empty_text)
             }
 
+            is Upcoming -> {
+                showBackButton(false)
+                title = getString(R.string.upcoming_title)
+                if (binding.recyclerView.adapter !== remindersAdapter)
+                    binding.recyclerView.adapter = remindersAdapter
+                remindersAdapter.data = state.reminders
+                itemTouchHelper.attachToRecyclerView(null)
+                binding.empty.setText(R.string.upcoming_empty)
+            }
+
+            is Starred -> {
+                showBackButton(state.page.selected > 0)
+                title = when (state.page.selected != 0) {
+                    true -> getString(R.string.main_title_selected, state.page.selected)
+                    false -> getString(R.string.starred_title)
+                }
+                if (binding.recyclerView.adapter !== conversationsAdapter)
+                    binding.recyclerView.adapter = conversationsAdapter
+                conversationsAdapter.updateData(state.page.data)
+                itemTouchHelper.attachToRecyclerView(null)
+                binding.empty.setText(R.string.starred_empty)
+            }
+
             else -> {}
         }
 
         binding.drawer.inbox.isActivated = state.page is Inbox
         binding.drawer.archived.isActivated = state.page is Archived
+        binding.drawer.starred.isActivated = state.page is Starred
 
         if (binding.drawerLayout.isDrawerOpen(GravityCompat.START) && !state.drawerOpen)
             binding.drawerLayout.closeDrawer(GravityCompat.START)
@@ -391,28 +463,112 @@ class MainActivity : QkThemedActivity(), MainView {
         currentCategory = when (state.page) {
             is Inbox -> state.page.category
             is Archived -> state.page.category
+            is Upcoming -> MainViewModel.TAB_UPCOMING
             else -> MessageClassifier.CATEGORY_ALL
         }
-        binding.categoryBar.setVisible(
-            (state.page is Inbox || state.page is Archived) && prefs.autoOrganize.get()
-        )
-        renderCategoryChips(currentCategory)
+        renderCategoryChips(state)
     }
 
-    private fun renderCategoryChips(category: Int) {
-        val chips = listOf(binding.chipAll, binding.chipPersonal, binding.chipTransactions,
-                binding.chipOtp, binding.chipOffers, binding.chipSpam)
-        val unselectedTint = resolveThemeColor(R.attr.bubbleColor)
-        val primaryText = resolveThemeColor(android.R.attr.textColorPrimary)
-        chips.forEachIndexed { index, chip ->
-            val selected = index - 1 == category
-            chip.setBackgroundTint(if (selected) themeColor else unselectedTint)
-            chip.setTextColor(if (selected) Color.WHITE else primaryText)
+    /** SMS Organizer style tabs: bold selected tab with a colored underline + counts */
+    private fun renderCategoryChips(state: MainState) {
+        val chipsVisible = (state.page is Inbox || state.page is Archived ||
+                state.page is Upcoming) && prefs.autoOrganize.get()
+        binding.categoryBar.setVisible(chipsVisible)
+
+        val selectedColor = getColor(R.color.organizerPrimary)
+        val secondaryText = resolveThemeColor(android.R.attr.textColorSecondary)
+        tabs.forEachIndexed { index, (chip, labelRes) ->
+            val category = tabCategories[index]
+            val selected = chipsVisible && category == currentCategory
+            val count = state.tabCounts[category] ?: 0
+            val label = getString(labelRes)
+            chip.text = if (count > 0) "$label ($count)" else label
+            chip.setBackgroundTint(if (selected) selectedColor else Color.TRANSPARENT)
+            chip.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
+            chip.setTextColor(if (selected) selectedColor else secondaryText)
         }
     }
 
     override fun onResume() =
         super.onResume().also { activityResumedIntent.onNext(true) }
+
+    override fun showAddReminderDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_add_reminder, null)
+        val name = dialogView.findViewById<QkEditText>(R.id.reminderName)
+        val description = dialogView.findViewById<QkEditText>(R.id.reminderDescription)
+        val dateTimeButton = dialogView.findViewById<QkTextView>(R.id.reminderDateTime)
+        var dueDate = 0L
+
+        dateTimeButton.setOnClickListener {
+            val cal = java.util.Calendar.getInstance()
+            android.app.DatePickerDialog(this, { _, year, month, day ->
+                android.app.TimePickerDialog(this, { _, hour, minute ->
+                    cal.set(year, month, day, hour, minute, 0)
+                    dueDate = cal.timeInMillis
+                    dateTimeButton.text = ReminderFormatter.format(this, dueDate)
+                }, cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE),
+                    android.text.format.DateFormat.is24HourFormat(this)).show()
+            }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH),
+                cal.get(java.util.Calendar.DAY_OF_MONTH)).show()
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.upcoming_add_reminder)
+            .setView(dialogView)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val reminderName = name.text?.toString()?.trim().orEmpty()
+                if (reminderName.isEmpty()) {
+                    makeToast(R.string.upcoming_reminder_needs_name)
+                } else {
+                    reminderCreatedIntent.onNext(Triple(
+                        reminderName,
+                        description.text?.toString()?.trim().orEmpty(),
+                        dueDate
+                    ))
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /** SMS Organizer's "Move to" — recategorize selected conversations, optionally forever */
+    private fun showMoveToDialog(conversations: List<Long>) {
+        val labels = arrayOf(
+            getString(R.string.category_personal),
+            getString(R.string.category_transactions),
+            getString(R.string.category_otp),
+            getString(R.string.category_offers),
+            getString(R.string.category_spam)
+        )
+        val categories = intArrayOf(
+            MessageClassifier.CATEGORY_PERSONAL,
+            MessageClassifier.CATEGORY_TRANSACTION,
+            MessageClassifier.CATEGORY_OTP,
+            MessageClassifier.CATEGORY_OFFERS,
+            MessageClassifier.CATEGORY_SPAM
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.move_to_title)
+            .setItems(labels) { _, which ->
+                val checkbox = CheckBox(this).apply {
+                    text = getString(R.string.move_to_future)
+                    setPadding(16.dpToPx(this@MainActivity), 8.dpToPx(this@MainActivity), 16.dpToPx(this@MainActivity), 0)
+                }
+                AlertDialog.Builder(this)
+                    .setTitle(labels[which])
+                    .setView(checkbox)
+                    .setPositiveButton(R.string.main_menu_move_to) { _, _ ->
+                        moveToCategoryIntent.onNext(
+                            Triple(conversations, categories[which], checkbox.isChecked)
+                        )
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
 
     override fun onPause() =
         super.onPause().also { activityResumedIntent.onNext(false) }

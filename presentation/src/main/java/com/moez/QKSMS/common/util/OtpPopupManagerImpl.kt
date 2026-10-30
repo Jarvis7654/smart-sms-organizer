@@ -33,7 +33,7 @@ class OtpPopupManagerImpl @Inject constructor(
     private val prefs: Preferences
 ) : OtpPopupManager {
 
-    override fun showOtpPopup(code: String, sender: String) {
+    override fun showOtpPopup(code: String, sender: String, isOfferCode: Boolean) {
         if (!prefs.otpPopup.get()) return
 
         // Android only allows launching an overlay activity from the background when the
@@ -42,7 +42,7 @@ class OtpPopupManagerImpl @Inject constructor(
         if (!Settings.canDrawOverlays(context)) return
 
         try {
-            context.launchOtpPopup(code, sender)
+            context.launchOtpPopup(code, sender, isOfferCode)
         } catch (e: Exception) {
             Timber.w(e, "Could not show OTP popup")
         }

@@ -425,6 +425,18 @@ class ComposeViewModel @Inject constructor(
                 .autoDisposable(view.scope())
                 .subscribe { view.clearSelection() }
 
+        // Star / unstar the selected messages
+        view.optionsItemIntent
+                .filter { it == R.id.star }
+                .withLatestFrom(view.messagesSelectedIntent) { _, messageIds -> messageIds }
+                .autoDisposable(view.scope())
+                .subscribe { messageIds ->
+                    val messages = messageIds.mapNotNull(messageRepo::getMessage)
+                    val shouldStar = messages.any { !it.starred }
+                    messageRepo.setStarred(messageIds, shouldStar)
+                    view.clearSelection()
+                }
+
         // share the message text contents
         view.optionsItemIntent
             .filter { it == R.id.share }

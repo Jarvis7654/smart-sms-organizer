@@ -28,8 +28,8 @@ android {
         applicationId 'dev.octoshrimpy.quik'
         minSdkVersion 23
         targetSdkVersion 33
-        versionCode 3000
-        versionName '1.0.0'
+        versionCode 3100
+        versionName '2.0.0'
         setProperty("archivesBaseName", "SmartSmsOrganizer-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

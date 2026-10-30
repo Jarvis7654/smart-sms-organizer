@@ -35,7 +35,6 @@ import dev.octoshrimpy.quik.blocking.BlockingManager
 import dev.octoshrimpy.quik.common.ViewModelFactory
 import dev.octoshrimpy.quik.common.util.NotificationManagerImpl
 import dev.octoshrimpy.quik.common.util.OtpPopupManagerImpl
-import dev.octoshrimpy.quik.common.util.RcsManagerImpl
 import dev.octoshrimpy.quik.common.util.ShortcutManagerImpl
 import dev.octoshrimpy.quik.feature.conversationinfo.injection.ConversationInfoComponent
 import dev.octoshrimpy.quik.feature.themepicker.injection.ThemePickerComponent
@@ -52,7 +51,6 @@ import dev.octoshrimpy.quik.manager.KeyManagerImpl
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.manager.OtpPopupManager
 import dev.octoshrimpy.quik.manager.PermissionManager
-import dev.octoshrimpy.quik.manager.RcsManager
 import dev.octoshrimpy.quik.manager.PermissionManagerImpl
 import dev.octoshrimpy.quik.manager.RatingManager
 import dev.octoshrimpy.quik.manager.ReferralManager
@@ -89,6 +87,8 @@ import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepositoryImpl
 import dev.octoshrimpy.quik.repository.MessageRepository
 import dev.octoshrimpy.quik.repository.MessageRepositoryImpl
+import dev.octoshrimpy.quik.repository.ReminderRepository
+import dev.octoshrimpy.quik.repository.ReminderRepositoryImpl
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepositoryImpl
 import dev.octoshrimpy.quik.repository.SyncRepository
@@ -167,9 +167,6 @@ class AppModule(private var application: Application) {
     fun provideRatingManager(manager: RatingManagerImpl): RatingManager = manager
 
     @Provides
-    fun provideRcsManager(manager: RcsManagerImpl): RcsManager = manager
-
-    @Provides
     fun provideShortcutManager(manager: ShortcutManagerImpl): ShortcutManager = manager
 
     @Provides
@@ -220,6 +217,9 @@ class AppModule(private var application: Application) {
 
     @Provides
     fun provideMessageRepository(repository: MessageRepositoryImpl): MessageRepository = repository
+
+    @Provides
+    fun provideReminderRepository(repository: ReminderRepositoryImpl): ReminderRepository = repository
 
     @Provides
     fun provideScheduledMessagesRepository(repository: ScheduledMessageRepositoryImpl): ScheduledMessageRepository = repository

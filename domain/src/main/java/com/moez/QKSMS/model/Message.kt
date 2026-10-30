@@ -83,6 +83,9 @@ open class Message : RealmObject() {
 
     var sendAsGroup: Boolean = false
 
+    // Starred/bookmarked message, shown in the Starred folder
+    var starred: Boolean = false
+
     fun getUri(): Uri {
         if (contentId == 0L)
             return Uri.EMPTY

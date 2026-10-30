@@ -21,8 +21,10 @@ package dev.octoshrimpy.quik.manager
 interface OtpPopupManager {
 
     /**
-     * Shows the SMS Organizer style OTP copy popup for [code], if the OTP popup preference
-     * is enabled and the app may draw over other apps. No-op otherwise.
+     * Shows the SMS Organizer style copy popup for [code], if the popup preference is
+     * enabled and the app may draw over other apps. No-op otherwise.
+     *
+     * @param isOfferCode true shows the offer/coupon code variant of the popup
      */
-    fun showOtpPopup(code: String, sender: String)
+    fun showOtpPopup(code: String, sender: String, isOfferCode: Boolean)
 }

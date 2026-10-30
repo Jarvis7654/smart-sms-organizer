@@ -26,30 +26,32 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.View
+import android.widget.Toast
 import androidx.core.content.getSystemService
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkThemedActivity
+import dev.octoshrimpy.quik.common.util.extensions.makeToast
 import dev.octoshrimpy.quik.databinding.OtpPopupActivityBinding
-import javax.inject.Inject
 
 /**
- * SMS Organizer style overlay that shows a verification code as soon as it arrives and
- * copies it to the clipboard. Launched automatically when "draw over other apps" is
- * granted, or from the "Copy code" notification action.
+ * SMS Organizer style bottom-card overlay: shows a verification or offer code as soon as
+ * the message arrives and copies it to the clipboard. Launched automatically when "draw
+ * over other apps" is granted, or from the "Copy code" notification action.
  */
 class OtpPopupActivity : QkThemedActivity() {
 
     companion object {
         const val EXTRA_CODE = "code"
         const val EXTRA_SENDER = "sender"
-        private const val AUTO_DISMISS_MILLIS = 4000L
+        const val EXTRA_IS_OFFER = "isOffer"
+        private const val AUTO_DISMISS_MILLIS = 6000L
     }
 
     private lateinit var binding: OtpPopupActivityBinding
     private val handler = Handler(Looper.getMainLooper())
     private val autoDismiss = Runnable { finish() }
+    private var code: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
@@ -63,24 +65,27 @@ class OtpPopupActivity : QkThemedActivity() {
         binding = OtpPopupActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val code = intent.getStringExtra(EXTRA_CODE) ?: run {
+        code = intent.getStringExtra(EXTRA_CODE) ?: run {
             finish()
             return
         }
-        val sender = intent.getStringExtra(EXTRA_SENDER) ?: getString(R.string.otp_popup_default_sender)
+        val sender = intent.getStringExtra(EXTRA_SENDER)
+            ?: getString(R.string.otp_popup_default_sender)
+        val isOffer = intent.getBooleanExtra(EXTRA_IS_OFFER, false)
 
+        binding.popupTitle.setText(
+            if (isOffer) R.string.otp_popup_title_offer else R.string.otp_popup_title
+        )
         binding.popupSender.text = sender
         binding.popupCode.text = code
 
-        copyToClipboard(code)
-        binding.popupCopied.visibility = View.VISIBLE
-
-        binding.popupRoot.setOnClickListener { finish() }
-        binding.popupCard.setOnClickListener {
+        binding.popupCopy.setOnClickListener {
             copyToClipboard(code)
+            makeToast(if (isOffer) R.string.otp_popup_offer_copied else R.string.otp_popup_copied)
             finish()
         }
         binding.popupDismiss.setOnClickListener { finish() }
+        binding.popupRoot.setOnClickListener { finish() }
 
         handler.postDelayed(autoDismiss, AUTO_DISMISS_MILLIS)
     }
@@ -106,10 +111,11 @@ class OtpPopupActivity : QkThemedActivity() {
 /**
  * Launch helper used from background contexts (worker/receiver).
  */
-fun Context.launchOtpPopup(code: String, sender: String) {
+fun Context.launchOtpPopup(code: String, sender: String, isOfferCode: Boolean) {
     val intent = Intent(this, OtpPopupActivity::class.java)
         .putExtra(OtpPopupActivity.EXTRA_CODE, code)
         .putExtra(OtpPopupActivity.EXTRA_SENDER, sender)
+        .putExtra(OtpPopupActivity.EXTRA_IS_OFFER, isOfferCode)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
     startActivity(intent)
 }

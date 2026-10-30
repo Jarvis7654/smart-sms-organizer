@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2026 Smart SMS Organizer contributors
+  ~
+  ~ This file is part of Smart SMS Organizer, based on QUIK/QKSMS.
+  ~ Licensed under the GNU General Public License v3.0.
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="16dp">
+
+    <dev.octoshrimpy.quik.common.widget.QkEditText
+        android:id="@+id/reminderName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/upcoming_reminder_name_hint"
+        android:inputType="textCapSentences"
+        android:maxLines="1" />
+
+    <dev.octoshrimpy.quik.common.widget.QkEditText
+        android:id="@+id/reminderDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="@string/upcoming_reminder_description_hint"
+        android:inputType="textCapSentences"
+        android:maxLines="2" />
+
+    <dev.octoshrimpy.quik.common.widget.QkTextView
+        android:id="@+id/reminderDateTime"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:text="@string/upcoming_pick_date"
+        android:textColor="@color/organizerPrimary"
+        android:textStyle="bold" />
+
+</LinearLayout>

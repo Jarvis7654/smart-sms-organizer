@@ -91,13 +91,29 @@ class ConversationRepositoryImpl @Inject constructor(
         getConversationsBase(Realm.getDefaultInstance(), unreadAtTop, archived, category)
             .findAllAsync()
 
-    override fun setCategory(threadId: Long, category: Int) {
+    override fun setCategory(threadId: Long, category: Int, alsoForFuture: Boolean) {
         Realm.getDefaultInstance().use { realm ->
             realm.executeTransaction {
                 realm.where(Conversation::class.java)
                     .equalTo("id", threadId)
                     .findFirst()
-                    ?.category = category
+                    ?.let { conversation ->
+                        conversation.category = category
+                        if (alsoForFuture) {
+                            conversation.categoryOverride = category
+                        }
+                    }
+            }
+        }
+    }
+
+    override fun clearCategoryOverride(threadIds: Collection<Long>) {
+        Realm.getDefaultInstance().use { realm ->
+            realm.executeTransaction {
+                realm.where(Conversation::class.java)
+                    .`in`("id", threadIds.toTypedArray())
+                    .findAll()
+                    .forEach { it.categoryOverride = null }
             }
         }
     }

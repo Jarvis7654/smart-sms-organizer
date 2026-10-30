@@ -55,6 +55,7 @@ import dev.octoshrimpy.quik.receiver.SpeakThreadsReceiver
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.repository.ReminderRepository
 import dev.octoshrimpy.quik.util.GlideApp
 import dev.octoshrimpy.quik.util.MessageClassifier
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
@@ -76,6 +77,7 @@ class NotificationManagerImpl @Inject constructor(
     private val permissions: PermissionManager,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val contactRepo: ContactRepository,
+    private val reminderRepo: ReminderRepository,
     private val shortcutManager: ShortcutManager
 ) : dev.octoshrimpy.quik.manager.NotificationManager {
 
@@ -83,6 +85,7 @@ class NotificationManagerImpl @Inject constructor(
         const val DEFAULT_CHANNEL_ID = "notifications_default"
         const val BACKUP_RESTORE_CHANNEL_ID = "notifications_backup_restore"
         const val RECEIVING_WORKER_CHANNEL_ID = "notifications_receiving_worker"
+        const val REMINDERS_CHANNEL_ID = "notifications_reminders"
 
         val MARK_TYPE_COUNT = MessageMarkReceiver.MarkType.values().size
 
@@ -480,6 +483,48 @@ class NotificationManagerImpl @Inject constructor(
                 .setVibrate(if (prefs.vibration(threadId).get()) VIBRATE_PATTERN else longArrayOf(0))
 
         notificationManager.notify(threadId.toInt() + 100000, notification.build())
+    }
+
+    override fun notifyReminders(reminders: List<dev.octoshrimpy.quik.model.Reminder>) {
+        if (reminders.isEmpty()) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.createNotificationChannel(
+                NotificationChannel(
+                    REMINDERS_CHANNEL_ID,
+                    context.getString(R.string.upcoming_reminders),
+                    NotificationManager.IMPORTANCE_DEFAULT
+                )
+            )
+        }
+
+        for (reminder in reminders) {
+            val contentIntent = Intent(context, ComposeActivity::class.java)
+                .putExtra("threadId", reminder.threadId)
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                (reminder.id + 300000L).toInt(),
+                contentIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val dueLabel = if (reminder.dueDate > 0)
+                ReminderFormatter.format(context, reminder.dueDate) else ""
+
+            val notification = NotificationCompat.Builder(context, REMINDERS_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(context.getString(R.string.upcoming_notification_title))
+                .setContentText(
+                    context.getString(R.string.upcoming_notification_text, reminder.title, dueLabel)
+                )
+                .setContentIntent(pendingIntent)
+                .setColor(colors.theme().theme)
+                .setAutoCancel(true)
+                .build()
+
+            notificationManager.notify((reminder.id + 300000L).toInt(), notification)
+            reminderRepo.setNotified(reminder.id, true)
+        }
     }
 
     private fun getReplyAction(threadId: Long): NotificationCompat.Action {

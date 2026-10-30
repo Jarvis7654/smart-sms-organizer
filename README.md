@@ -2,23 +2,27 @@
 
 **A feature-rich, open-source SMS app for Android with the smart-organization features of a modern messenger — built on [QUIK](https://github.com/quik-sms/quik) (a continuation of [QKSMS](https://github.com/moezbhatti/qksms)).**
 
-Smart SMS Organizer automatically sorts your inbox, surfaces one-time passwords the moment they arrive, and gives you full control over every RCS-related behavior with a single master switch.
+Smart SMS Organizer automatically sorts your inbox, surfaces one-time passwords the moment they arrive, 
 
 ## Highlights
 
-### Smart inbox auto-organization
-Incoming messages are classified on-device into **Personal**, **Transactions**, **OTP**, **Offers** and **Spam**. Filter your inbox instantly with the category chips at the top of the conversation list — no cloud, no ML service, fully offline heuristics (sender-ID patterns such as DLT-style transactional sender IDs plus weighted keyword scoring).
+### Smart inbox with organizer tabs
+The inbox opens on SMS Organizer style tabs: **All, Personal, Transactions, OTP, Offers, Upcoming, Spam** — each with a live count. Messages are classified fully on-device (no ML service, no network) using sender-ID patterns and weighted keyword scoring.
 
-### OTP copy popup
-When a verification code arrives, Smart SMS Organizer shows an SMS Organizer-style popup over whatever you're doing and copies the code to your clipboard — one tap to copy, tap outside to dismiss. If the overlay permission isn't granted, the notification gets a **"Copy code"** action instead, so the code is always one tap away.
+### Upcoming reminders
+Bills due, train/flight/bus journeys, movies, doctor appointments and deliveries are automatically extracted into reminder cards with dates, times and amounts — like SMS Organizer's Upcoming tab. You also get custom reminders and a heads-up notification before things come due.
 
-### Auto-delete OTPs
-Verification codes are useless 24 hours later. Enable auto-delete and stale OTP messages are cleaned up daily in the background.
+### OTP & offer code copy popup
+Verification codes pop up over whatever you're doing in a bottom card and copy to your clipboard in one tap. Coupon/offer codes get the same treatment ("Offer Code Copied"). No overlay permission? The notification gets a one-tap **Copy code** action instead.
 
-### RCS chats with a real off switch
-A single **RCS chats** master switch in Settings → General. **When it's off, every RCS code path in the app is disabled completely** — no capability probes, no indicators, nothing. When it's on, the app does a best-effort probe of the device's RCS provisioning state and reports it in Settings.
+### Transactions that talk money
+Amounts are pulled right onto the conversation rows — green for credits, red for debits, straight from the message text.
 
-> **Honest note on RCS:** Android does not expose a public API for third-party apps to *transport* RCS messages — that requires carrier/Google certification. Smart SMS Organizer therefore treats RCS as an indicator layer on top of SMS/MMS and always delivers over SMS/MMS. The master switch guarantees zero RCS behavior when disabled.
+### Star messages
+Star any SMS from the conversation's action bar and find it later in the **Starred** folder in the drawer.
+
+### Move-to rules
+Select conversations → **Move to** → pick a category, optionally applying it to *all future messages* from that sender ("Move future SMS").
 
 ### Everything inherited from QUIK
 - Scheduled and delayed sending
@@ -28,7 +32,7 @@ A single **RCS chats** master switch in Settings → General. **When it's off, e
 - Voice messages and any-file-type attachments
 - Quick reply from notifications
 - Swipe actions, emoji reactions
-- Dual SIM, delivery reports, night mode, and much more
+- Auto-delete OTPs, dual SIM, delivery reports, night mode, and much more
 
 ## Download
 
@@ -57,4 +61,4 @@ Contributions are welcome — open an issue or a pull request. Please keep new f
 
 This project is licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE).
 
-Smart SMS Organizer is a fork of [QUIK](https://github.com/quik-sms/quik) by octoshrimpy and contributors, which is itself a continuation of [QKSMS](https://github.com/moezbhatti/qksms) by Moez Bhatti. All credit for the original messaging core goes to those projects; the smart-organization, OTP popup, OTP auto-delete and RCS-gating features introduced here are new work, licensed under the same GPLv3.
+Smart SMS Organizer is a fork of [QUIK](https://github.com/quik-sms/quik) by octoshrimpy and contributors, which is itself a continuation of [QKSMS](https://github.com/moezbhatti/qksms) by Moez Bhatti. All credit for the original messaging core goes to those projects; the smart-organization, OTP popup, reminders and auto-delete features introduced here are new work, licensed under the same GPLv3.

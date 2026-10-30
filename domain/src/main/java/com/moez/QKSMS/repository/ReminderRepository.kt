@@ -16,24 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dev.octoshrimpy.quik.manager
+package dev.octoshrimpy.quik.repository
 
-interface RcsManager {
+import dev.octoshrimpy.quik.model.Reminder
+import io.realm.RealmResults
 
-    /**
-     * True when the user turned the "RCS chats" master switch on. When this is false, every
-     * RCS-related feature in the app is fully disabled.
-     */
-    fun isRcsEnabled(): Boolean
+interface ReminderRepository {
 
-    /**
-     * True when RCS chats are enabled and the device reports RCS provisioning on the active
-     * subscription. Best-effort probe: returns false whenever capability cannot be determined.
-     */
-    fun isRcsAvailable(): Boolean
+    /** Active (not dismissed) reminders sorted by due date, fed to the Upcoming tab */
+    fun getReminders(): RealmResults<Reminder>
 
-    /**
-     * Human readable status shown under the settings entry, or null when not applicable.
-     */
-    fun getStatusSummary(): String?
+    /** Reminders due within the next [withinMillis] that haven't been notified */
+    fun getDueSoon(withinMillis: Long): List<Reminder>
+
+    fun getReminder(id: Long): Reminder?
+
+    fun insertOrUpdate(reminder: Reminder)
+
+    fun setDismissed(id: Long, dismissed: Boolean)
+
+    fun setNotified(id: Long, notified: Boolean)
+
+    /** Removes reminders that point at deleted messages/threads */
+    fun cleanup()
 }

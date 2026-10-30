@@ -147,9 +147,6 @@ class Preferences @Inject constructor(
     // Automatically delete OTP messages after 24 hours
     val autoDeleteOtps = rxPrefs.getBoolean("autoDeleteOtps", false)
 
-    // RCS chats master switch. When off, every RCS-related feature is fully disabled
-    val rcsEnabled = rxPrefs.getBoolean("rcsEnabled", false)
-
     init {
         // Migrate from old night mode preference to new one, now that we support android Q night mode
         val nightModeSummary = rxPrefs.getInteger("nightModeSummary")
@@ -183,10 +180,10 @@ class Preferences @Inject constructor(
 
     fun theme(
         recipientId: Long = 0,
-        default: Int = rxPrefs.getInteger("theme", 0xFF0097A7.toInt()).get()
+        default: Int = rxPrefs.getInteger("theme", 0xFF4A90E2.toInt()).get()
     ): Preference<Int> {
         return when (recipientId) {
-            0L -> rxPrefs.getInteger("theme", 0xFF0097A7.toInt())
+            0L -> rxPrefs.getInteger("theme", 0xFF4A90E2.toInt())
             else -> rxPrefs.getInteger("theme_$recipientId", default)
         }
     }

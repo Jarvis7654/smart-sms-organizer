@@ -25,6 +25,7 @@ import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.ExternalNavigator
 import dev.octoshrimpy.quik.common.Navigator
 import dev.octoshrimpy.quik.common.base.QkViewModel
+import dev.octoshrimpy.quik.extensions.asObservable
 import dev.octoshrimpy.quik.extensions.mapNotNull
 import dev.octoshrimpy.quik.interactor.DeleteConversations
 import dev.octoshrimpy.quik.interactor.MarkAllSeen
@@ -43,10 +44,12 @@ import dev.octoshrimpy.quik.manager.ChangelogManager
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.manager.RatingManager
 import dev.octoshrimpy.quik.model.EmojiSyncNeeded
+import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.SyncLog
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.EmojiReactionRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.repository.ReminderRepository
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.MessageClassifier
@@ -55,6 +58,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
+import io.realm.RealmResults
+import io.realm.Sort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -70,6 +75,7 @@ class MainViewModel @Inject constructor(
     private val changelogManager: ChangelogManager,
     private val conversationRepo: ConversationRepository,
     private val messageRepo: MessageRepository,
+    private val reminderRepo: ReminderRepository,
     private val deleteConversations: DeleteConversations,
     private val markArchived: MarkArchived,
     private val markPinned: MarkPinned,
@@ -90,6 +96,11 @@ class MainViewModel @Inject constructor(
 ) : QkViewModel<MainView, MainState>(
     MainState(page = Inbox(data = conversationRepo.getConversations(prefs.unreadAtTop.get())))
 ) {
+    companion object {
+        /** Sentinel tab id for the Upcoming (reminders) tab — not a classifier category */
+        const val TAB_UPCOMING = 100
+    }
+
     private var lastArchivedThreadIds = listOf<Long>(0)
 
     init {
@@ -120,6 +131,26 @@ class MainViewModel @Inject constructor(
             .subscribe { ids ->
                 newState { copy(scheduledConversationIds = ids) }
             }
+
+        // Organizer tab counts (unread-style badge per category)
+        disposables += conversationRepo.getConversations(prefs.unreadAtTop.get())
+            .asObservable()
+            .map { results ->
+                mapOf(
+                    MessageClassifier.CATEGORY_PERSONAL to results.count { it.category == MessageClassifier.CATEGORY_PERSONAL },
+                    MessageClassifier.CATEGORY_TRANSACTION to results.count { it.category == MessageClassifier.CATEGORY_TRANSACTION },
+                    MessageClassifier.CATEGORY_OTP to results.count { it.category == MessageClassifier.CATEGORY_OTP },
+                    MessageClassifier.CATEGORY_OFFERS to results.count { it.category == MessageClassifier.CATEGORY_OFFERS },
+                    MessageClassifier.CATEGORY_SPAM to results.count { it.category == MessageClassifier.CATEGORY_SPAM }
+                )
+            }
+            .subscribe { counts -> newState { copy(tabCounts = counts) } }
+
+        // Active reminders for the Upcoming tab
+        disposables += reminderRepo.getReminders()
+            .asObservable()
+            .map { results -> Realm.getDefaultInstance().copyFromRealm(results) }
+            .subscribe { reminders -> newState { copy(reminders = reminders) } }
 
         // Migrate the preferences from 2.7.3
         migratePreferences.execute(Unit)
@@ -189,29 +220,73 @@ class MainViewModel @Inject constructor(
             .autoDisposable(view.scope())
             .subscribe()
 
-        // Auto-organization category chips: filter the conversation list
+        // Auto-organization category tabs: filter the conversation list, or show reminders
         view.categorySelectedIntent
             .withLatestFrom(state) { category, currentState ->
-                when (currentState.page) {
-                    is Inbox -> newState {
-                        copy(page = currentState.page.copy(
-                            category = category,
-                            data = conversationRepo.getConversations(prefs.unreadAtTop.get(), false, category)
-                        ))
-                    }
+                when (category) {
+                    TAB_UPCOMING -> newState { copy(page = Upcoming()) }
 
-                    is Archived -> newState {
-                        copy(page = currentState.page.copy(
-                            category = category,
-                            data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true, category)
-                        ))
-                    }
+                    else -> when (currentState.page) {
+                        is Inbox -> newState {
+                            copy(page = currentState.page.copy(
+                                category = category,
+                                data = conversationRepo.getConversations(prefs.unreadAtTop.get(), false, category)
+                            ))
+                        }
 
-                    else -> Unit
+                        is Archived -> newState {
+                            copy(page = currentState.page.copy(
+                                category = category,
+                                data = conversationRepo.getConversations(prefs.unreadAtTop.get(), true, category)
+                            ))
+                        }
+
+                        is Starred -> newState {
+                            copy(page = Inbox(
+                                category = category,
+                                data = conversationRepo.getConversations(prefs.unreadAtTop.get(), false, category)
+                            ))
+                        }
+
+                        else -> Unit
+                    }
                 }
             }
             .autoDisposable(view.scope())
             .subscribe()
+
+        // Reminders: dismiss from the Upcoming tab
+        view.reminderDismissIntent
+            .autoDisposable(view.scope())
+            .subscribe { reminderId -> reminderRepo.setDismissed(reminderId, true) }
+
+        // Custom reminders created from the Add Reminder dialog
+        view.reminderCreatedIntent
+            .autoDisposable(view.scope())
+            .subscribe { (name, description, dueDate) ->
+                val now = System.currentTimeMillis()
+                reminderRepo.insertOrUpdate(
+                    dev.octoshrimpy.quik.model.Reminder(
+                        id = now,
+                        type = dev.octoshrimpy.quik.model.Reminder.TYPE_OTHER,
+                        title = name,
+                        subtitle = description,
+                        amount = "",
+                        dueDate = dueDate,
+                        threadId = 0,
+                        messageId = 0
+                    )
+                )
+            }
+
+        // "Move to" category action from the selection toolbar
+        view.moveToCategoryIntent
+            .autoDisposable(view.scope())
+            .subscribe { (threadIds, category, alsoFuture) ->
+                threadIds.forEach { threadId ->
+                    conversationRepo.setCategory(threadId, category, alsoFuture)
+                }
+            }
 
         // If the default SMS state changes, reflect it in the State
         view.activityResumedIntent
@@ -340,6 +415,7 @@ class MainViewModel @Inject constructor(
                         state.page is Searching -> view.clearSearch()
                         state.page is Inbox && state.page.selected > 0 -> view.clearSelection()
                         state.page is Archived && state.page.selected > 0 -> view.clearSelection()
+                        state.page is Starred && state.page.selected > 0 -> view.clearSelection()
 
                         else -> newState { copy(drawerOpen = true) }
                     }
@@ -364,6 +440,7 @@ class MainViewModel @Inject constructor(
                         state.page is Searching -> view.clearSearch()
                         state.page is Inbox && state.page.selected > 0 -> view.clearSelection()
                         state.page is Archived && state.page.selected > 0 -> view.clearSelection()
+                        state.page is Starred && state.page.selected > 0 -> view.clearSelection()
                         state.page !is Inbox -> {
                             newState {
                                 copy(
@@ -414,6 +491,8 @@ class MainViewModel @Inject constructor(
                         )
                     }
 
+                    NavItem.STARRED -> newState { copy(page = Starred(data = loadStarredConversations())) }
+
                     else -> Unit
                 }
             }
@@ -424,6 +503,20 @@ class MainViewModel @Inject constructor(
             .filter { itemId -> itemId == R.id.select_all }
             .autoDisposable(view.scope())
             .subscribe { view.toggleSelectAll() }
+
+        view.optionsItemIntent
+            .filter { itemId -> itemId == R.id.mark_all_read }
+            .filter { permissionManager.isDefaultSms().also { ok -> if (!ok) view.requestDefaultSms() } }
+            .autoDisposable(view.scope())
+            .subscribe {
+                val unreadIds = conversationRepo.getUnreadIds(false)
+                if (unreadIds.isNotEmpty()) markRead.execute(unreadIds)
+            }
+
+        view.optionsItemIntent
+            .filter { itemId -> itemId == R.id.add_reminder }
+            .autoDisposable(view.scope())
+            .subscribe { view.showAddReminderDialog() }
 
         view.optionsItemIntent
                 .filter { itemId -> itemId == R.id.archive }
@@ -560,6 +653,10 @@ class MainViewModel @Inject constructor(
                             newState { copy(page = page) }
                         }
 
+                        is Starred -> {
+                            newState { copy(page = state.page.copy(selected = selected)) }
+                        }
+
                         is Searching -> {} // Ignore
                         else -> {}
                     }
@@ -647,6 +744,20 @@ class MainViewModel @Inject constructor(
                 }
                 .autoDisposable(view.scope())
                 .subscribe()
+    }
+
+    /** Conversations that contain at least one starred message */
+    private fun loadStarredConversations(): RealmResults<dev.octoshrimpy.quik.model.Conversation> {
+        val threadIds = messageRepo.getStarredThreadIds()
+
+        return Realm.getDefaultInstance()
+            .where(dev.octoshrimpy.quik.model.Conversation::class.java)
+            .apply {
+                if (threadIds.isEmpty()) equalTo("id", -1L)
+                else `in`("id", threadIds.toTypedArray())
+            }
+            .sort("lastMessage.date", io.realm.Sort.DESCENDING)
+            .findAllAsync()
     }
 
 }

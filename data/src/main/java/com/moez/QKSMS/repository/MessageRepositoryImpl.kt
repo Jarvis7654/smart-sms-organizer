@@ -998,6 +998,26 @@ open class MessageRepositoryImpl @Inject constructor(
                 } ?: Unit
         }
 
+    override fun setStarred(messageIds: Collection<Long>, starred: Boolean) {
+        Realm.getDefaultInstance().use { realm ->
+            realm.executeTransaction {
+                realm.where(Message::class.java)
+                    .anyOf("id", messageIds.toLongArray())
+                    .findAll()
+                    .forEach { it.starred = starred }
+            }
+        }
+    }
+
+    override fun getStarredThreadIds(): List<Long> =
+        Realm.getDefaultInstance().use { realm ->
+            realm.where(Message::class.java)
+                .equalTo("starred", true)
+                .distinct("threadId")
+                .findAll()
+                .map { it.threadId }
+        }
+
     override fun getOldMessageCounts(maxAgeDays: Int) =
         Realm.getDefaultInstance().use { realm ->
             realm.where(Message::class.java)

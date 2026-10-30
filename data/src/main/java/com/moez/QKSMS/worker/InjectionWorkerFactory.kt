@@ -33,6 +33,7 @@ import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageContentFilterRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.repository.ReminderRepository
 import dev.octoshrimpy.quik.repository.ScheduledMessageRepository
 import dev.octoshrimpy.quik.repository.SyncRepository
 import dev.octoshrimpy.quik.util.Preferences
@@ -52,6 +53,7 @@ class InjectionWorkerFactory @Inject constructor(
     private val filterRepo: MessageContentFilterRepository,
     private val contactRepo: ContactRepository,
     private val otpPopupManager: OtpPopupManager,
+    private val reminderRepo: ReminderRepository,
 
 ) : WorkerFactory() {
     override fun createWorker(
@@ -84,6 +86,10 @@ class InjectionWorkerFactory @Inject constructor(
                 instance.prefs = prefs
                 instance.conversationRepo = conversationRepo
                 instance.messageRepo = messageRepo
+            }
+            is ReminderNotifyWorker -> {
+                instance.reminderRepo = reminderRepo
+                instance.notificationManager = notificationManager
             }
             is ReceiveMmsWorker -> {
                 instance.syncRepo = syncRepo

@@ -97,4 +97,24 @@
         android:visible="false"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/move_to"
+        android:icon="@drawable/ic_move_to_black_24dp"
+        android:title="@string/main_menu_move_to"
+        android:visible="false"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/mark_all_read"
+        android:title="@string/main_menu_mark_all_read"
+        android:visible="false"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/add_reminder"
+        android:icon="@drawable/ic_reminder_event"
+        android:title="@string/upcoming_add_reminder"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
 </menu>

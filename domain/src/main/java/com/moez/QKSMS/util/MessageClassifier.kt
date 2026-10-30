@@ -173,4 +173,45 @@ object MessageClassifier {
         while (matcher.find()) count++
         return count
     }
+
+    // --- money extraction -------------------------------------------------------------
+
+    // "Rs 1,250.00", "₹499", "INR 25000", "credited $75"
+    private val MONEY_VALUE = Pattern.compile(
+        "(?i)(?:rs\\.?|inr|₹|usd ?|\\$|€)\\s?[0-9]{1,3}(?:[, ][0-9]{2,3})*(?:\\.[0-9]{1,2})?" +
+                "|[0-9]{1,3}(?:,[0-9]{2,3})+(?:\\.[0-9]{2})?\\s?(?:rs\\.?|inr|₹)")
+
+    private val CREDIT_WORD = Pattern.compile("(?i)\\b(credited|credit|received|deposited|added|refunded|cashback|salary)\\b")
+    private val DEBIT_WORD = Pattern.compile("(?i)\\b(debited|debit|spent|paid|deducted|withdrawn|charged|purchase|sent)\\b")
+
+    /** True when the message text mentions money being credited. */
+    fun isCredit(body: String): Boolean = CREDIT_WORD.matcher(body).find()
+
+    /** True when the message text mentions money being debited. */
+    fun isDebit(body: String): Boolean = DEBIT_WORD.matcher(body).find()
+
+    /**
+     * Returns the first money amount in [body] with its currency prefix (e.g. "Rs 1,250"),
+     * or null when no amount is present.
+     */
+    fun extractAmount(body: String): String? {
+        val m = MONEY_VALUE.matcher(body)
+        return if (m.find()) m.group().trim() else null
+    }
+
+    // --- coupon / offer codes ----------------------------------------------------------
+
+    private val OFFER_CODE_KEYWORD = Pattern.compile(
+        "(?i)\\b(coupon|promo(?:tion)? code|offer code|use code|code:|voucher)\\b")
+
+    /**
+     * Returns an offer/coupon code from [body] (alphanumeric token near a coupon keyword),
+     * or null when none is found. Falls back to a plain OTP extraction result.
+     */
+    fun extractOfferCode(body: String): String? {
+        if (!OFFER_CODE_KEYWORD.matcher(body).find()) return null
+        val code = Pattern.compile("(?i)(?:code|voucher)\\s*[:#-]?\\s*([A-Z0-9]{4,15})")
+        code.matcher(body).let { m -> if (m.find()) return m.group(1) }
+        return null
+    }
 }

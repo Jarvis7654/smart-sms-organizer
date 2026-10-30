@@ -54,7 +54,5 @@ data class SettingsState(
     val autoOrganizeEnabled: Boolean = true,
     val otpPopupEnabled: Boolean = true,
     val autoDeleteOtpsEnabled: Boolean = false,
-    val rcsEnabled: Boolean = false,
-    val rcsSummary: String = "",
     val syncProgress: SyncRepository.SyncProgress = SyncRepository.SyncProgress.Idle
 )
